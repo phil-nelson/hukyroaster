@@ -15,12 +15,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
+import argparse
 from SimpleCV import *
 
+# Fetches image from source, optionally crops to bounding box
 def getImage(crop = False):
     img = cam.getImage()
-    #img = Image('test.jpg')
-    return img if not crop else img.crop(bb[0], bb[1], bb[2], bb[3])
+    #img = Image('gauge-sample.jpg')
+    return img if not crop else img.crop(boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3])
 
 # Let user draw a bounding box to crop to, returns bounding box
 def getBoundingBox():
@@ -55,7 +57,7 @@ def getBoundingBox():
 def getClickedPixelHue():
     while (disp.isNotDone()):
         img = getImage(True)
-	img.drawText("Click on the needle", 5, 5)
+        img.drawText("Click on the needle", 5, 5)
 
         up = disp.leftButtonUpPosition()
         if (up is not None):
@@ -63,7 +65,7 @@ def getClickedPixelHue():
             return hsvimg.getPixel(up[0], up[1])[0]
         img.save(disp)
 
-# Does stuff to calculate angle and draws needle blob on image
+# Finds the needle, calculates the angle and draws blob around the needle on the image
 def getNeedleAngle(img):
         distimg = img.hueDistance(needleHue).stretch(0, 50).binarize()
         blobs = distimg.findBlobs()
@@ -73,7 +75,7 @@ def getNeedleAngle(img):
         blobs[-1].drawOutline(layer=img.getDrawingLayer(), color=(255,0,0))
         return int(round(blobs[-1].angle() / 5.0) * 5.0)
 
-# Ask user to place needle at different kPa angles and store angle/kPa values
+# Ask user to place needle at different kPa values and store angle/kPa values
 def calibratekPaAngles():
     kPas = [0, 1, 1.5, 2, 2.5, 3, 3.5, 4]
     kPaAngles = {}
@@ -81,7 +83,7 @@ def calibratekPaAngles():
         while (disp.isNotDone()):
             img = getImage(True)
             angle = getNeedleAngle(img)
-            img.drawText("Place needle at %.1f kPa and click anywhere when done" % i, 10, 30)
+            img.drawText("Place needle at %.1f kPa then click" % i, 10, 30)
             img.drawText("Angle: %d" % (angle), 10, 10)
             up = disp.leftButtonUpPosition()
             if (up is not None):
@@ -112,11 +114,14 @@ def doIt():
 def findkPa(angle):
     return kPaAngles[angle] if angle in kPaAngles else kPaAngles[min(kPaAngles.keys(), key=lambda k: abs(k - angle))]
 
-cam = Camera(1)
+
+parser = argparse.ArgumentParser(description="Use image recognition to read a gauge")
+parser.add_argument('--camera', dest='camera', default=0, help="Camera number. Cameras are generally numbered in the order they are plugged in, starting from 0. E.g. Built in camera will be zero, plugged in USB camera will be 1 etc.")
+args = parser.parse_args()
+cam = Camera(int(args.camera))
 img = getImage()
 disp = Display(img.size())
-bb = getBoundingBox()
+boundingBox = getBoundingBox()
 needleHue = getClickedPixelHue()
 kPaAngles = calibratekPaAngles()
-print kPaAngles
 doIt()
