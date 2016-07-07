@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8"></meta>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
+<script>
+
+var pollTimer;
+
+$(document).ready(function() {
+    slider = $('#motorslider');
+	slider.change(function() {
+        var steps = this.value;
+        slider.val(0);
+        $('#sliderVal').text(this.value);
+        $.get('motorpositions.php', {'method': 'moveMotor', 'steps': steps});
+	});
+    slider.on('input', function() {
+        $('#sliderVal').text(this.value);
+    })
+    $('#sliderVal').text(slider.val());
+    $('#setkpa1').click(function() {
+        setPosition('1', $('#kpa1').val());
+        return false;
+    });
+    $('#setkpa15').click(function() {
+        setPosition('1.5', $('#kpa1.5').val());
+        return false;
+    });
+    $('#setkpa2').click(function() {
+        setPosition('2', $('#kpa2').val());
+        return false;
+    });
+    $('#setkpa25').click(function() {
+        setPosition('2.5', $('#kpa25').val());
+        return false;
+    });
+    $('#setkpa3').click(function() {
+        setPosition('3', $('#kpa3').val());
+        return false;
+    });
+    $('#setkpa35').click(function() {
+        setPosition('3.5', $('#kpa35').val());
+        return false;
+    });
+    $('#setkpa4').click(function() {
+        setPosition('4', $('#kpa4').val());
+        return false;
+    });
+    $('#kpago1').click(function() {
+        $.get('motorpositions.php', {'method': 'moveMotorTo', 'position': $('#kpa1').val()});
+        return false;
+    });
+    $('#kpago15').click(function() {
+        $.get('motorpositions.php', {'method': 'moveMotorTo', 'position': $('#kpa15').val()});
+        return false;
+    });
+    $('#kpago2').click(function() {
+        $.get('motorpositions.php', {'method': 'moveMotorTo', 'position': $('#kpa2').val()});
+        return false;
+    });
+    $('#kpago25').click(function() {
+        $.get('motorpositions.php', {'method': 'moveMotorTo', 'position': $('#kpa25').val()});
+        return false;
+    });
+    $('#kpago3').click(function() {
+        $.get('motorpositions.php', {'method': 'moveMotorTo', 'position': $('#kpa3').val()});
+        return false;
+    });
+    $('#kpago35').click(function() {
+        $.get('motorpositions.php', {'method': 'moveMotorTo', 'position': $('#kpa35').val()});
+        return false;
+    });
+    $('#kpago4').click(function() {
+        $.get('motorpositions.php', {'method': 'moveMotorTo', 'position': $('#kpa4').val()});
+        return false;
+    });
+    $('#setzero').click(function() {
+        $.get('motorpositions.php', {'method' : 'setCurrentAsZero'});
+        return false;
+    });
+    $('#refreshPosition').click(function() {
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+            $(this).html('poll');
+        } else {
+            pollTimer = setInterval(function() {
+                getCurrentPosition();
+            }, 1000);
+            $(this).html('stop');
+        }
+        return false;
+    });
+    getPositions();
+    getCurrentPosition();
+    /*
+    */
+});
+
+function setPosition(kPa, position) {
+    $.getJSON('motorpositions.php', {'method' : 'setPosition', 'kPa': kPa, 'position': position})
+        .done(function(json) {
+            updatePositions(json);
+        })
+}
+
+function getPositions() {
+    $.getJSON('motorpositions.php', {'method' : 'getPositions'})
+        .done(function(json) {
+            updatePositions(json);
+        })
+}
+
+function getCurrentPosition() {
+    $.getJSON('motorpositions.php', {'method' : 'getCurrentPosition'})
+        .done(function(json) {
+            $('#currentPosition').text(json['position']);
+        })
+}
+
+function updatePositions(json) {
+    $('#kpa1').val(json[1]);
+    $('#kpa15').val(json[1.5]);
+    $('#kpa2').val(json[2]);
+    $('#kpa25').val(json[2.5]);
+    $('#kpa3').val(json[3]);
+    $('#kpa35').val(json[3.5]);
+    $('#kpa4').val(json[4]);
+}
+</script>
+<style>
+body {
+    font-family: Arial, Helvetica, Verdana, sans-serif;
+}
+</style>
+</head>
+<body>
+<form method="POST">
+<center><div id="sliderVal"></div></center>
+<input id="motorslider" name="motorslider" type="range" min="-4000" max="4000" step="100" value="0" style="width: 100%"></input>
+Current position: <span id="currentPosition"></span><button id="refreshPosition">poll</button><br/>
+<button id="setzero">Set current as zero</button>
+<table>
+<th>kPa</th><th></th>
+<tr><td>1</td><td><input id="kpa1"></input></td><td><button id="setkpa1">Set current</button><button id="kpago1">Go</button></td></tr>
+<tr><td>1.5</td><td><input id="kpa15"></input></td><td><button id="setkpa15">Set current</button><button id="kpago15">Go</button></td></tr>
+<tr><td>2</td><td><input id="kpa2"></input></td><td><button id="setkpa2">Set current</button><button id="kpago2">Go</button></td></tr>
+<tr><td>2.5</td><td><input id="kpa25"></input></td><td><button id="setkpa25">Set current</button><button id="kpago25">Go</button></td></tr>
+<tr><td>3</td><td><input id="kpa3"></input></td><td><button id="setkpa3">Set current</button><button id="kpago3">Go</button></td></tr>
+<tr><td>3.5</td><td><input id="kpa35"></input></td><td><button id="setkpa35">Set current</button><button id="kpago35">Go</button></td></tr>
+<tr><td>4</td><td><input id="kpa4"></input></td><td><button id="setkpa4">Set current</button><button id="kpago4">Go</button></td></tr>
+</table>
+</form>
+</body>
+</html>
